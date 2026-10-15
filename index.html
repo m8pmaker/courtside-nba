@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Courtside — NBA Live Center</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f3f5f8, #0b0f14);
+  --surface: light-dark(#ffffff, #141a22);
+  --surface2: light-dark(#f7f9fb, #1b232e);
+  --text: light-dark(#18212c, #f2f5f8);
+  --muted: light-dark(#697789, #9ba9b9);
+  --line: light-dark(#e1e6ed, #293341);
+  --accent: #f45b35;
+  --green: #27b47e;
+  --blue: #4b83f0;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+#app { min-height: 100vh; width: 100%; background: var(--bg); border-radius: 0; }
+.topbar { height: 62px; display:flex; align-items:center; justify-content:space-between; padding:0 26px; border-bottom:1px solid var(--line); background:var(--surface); }
+.brand { display:flex; align-items:center; gap:11px; font-weight:850; letter-spacing:-.7px; font-size:19px; }
+.logo { width:30px; height:30px; display:grid; place-items:center; background:var(--accent); color:white; border-radius:9px; font-size:18px; }
+.brand small { font-size:10px; color:var(--muted); letter-spacing:1.8px; display:block; margin-top:1px; font-weight:700; }
+.top-actions { display:flex; gap:10px; align-items:center; }
+.pill { border:1px solid var(--line); border-radius:999px; padding:7px 11px; font-size:11px; font-weight:750; color:var(--muted); display:flex; gap:7px; align-items:center; }
+.dot { width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; }
+button, select { font:inherit; cursor:pointer; }
+button { border:1px solid var(--line); color:var(--text); background:var(--surface); border-radius:8px; padding:8px 12px; font-size:12px; font-weight:700; }
+button:hover { border-color:var(--accent); }
+button.primary { background:var(--accent); color:white; border-color:var(--accent); }
+.page { max-width:1500px; margin:auto; padding:19px 24px 24px; }
+.headline { display:flex; align-items:end; justify-content:space-between; margin-bottom:15px; gap:12px; }
+.eyebrow { font-size:10px; letter-spacing:1.8px; font-weight:850; color:var(--accent); text-transform:uppercase; }
+h1 { margin:4px 0 0; font-size:25px; letter-spacing:-1px; line-height:1.15; }
+.sub { color:var(--muted); font-size:12px; margin-top:5px; }
+.date-nav { display:flex; gap:7px; align-items:center; }
+.date-label { font-size:12px; font-weight:750; padding:0 6px; white-space:nowrap; }
+.score-strip { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin-bottom:12px; }
+.game-card { min-width:0; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:6px 9px; cursor:pointer; transition:.15s ease; }
+.game-card:hover,.game-card.selected { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.game-meta { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:9px; margin-bottom:4px; gap:5px; }
+.live-tag { color:var(--green); font-weight:850; letter-spacing:.7px; }
+.teamline { display:flex; align-items:center; gap:6px; margin:3px 0; min-width:0; }
+.team-logo { flex:0 0 21px; width:21px; height:21px; border-radius:6px; display:grid; place-items:center; color:white; font-size:8px; font-weight:900; background:#27364a; }
+.team-name { font-size:10px; font-weight:750; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.score { margin-left:auto; font-size:13px; font-weight:850; font-variant-numeric:tabular-nums; }
+.game-foot { border-top:1px solid var(--line); margin-top:4px; padding-top:4px; font-size:9px; color:var(--muted); display:flex; justify-content:space-between; }
+.content-grid { display:flex; flex-direction:column; gap:12px; align-items:stretch; }
+.panel { background:var(--surface); border:1px solid var(--line); border-radius:13px; min-width:0; overflow:hidden; }
+.panel-head { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--line); gap:10px; }
+.panel-title { font-size:13px; font-weight:850; letter-spacing:-.2px; }
+.panel-kicker { color:var(--muted); font-size:10px; margin-top:3px; }
+.tabs { display:flex; gap:3px; background:var(--surface2); border-radius:8px; padding:3px; }
+.tab { border:0; background:transparent; padding:7px 10px; font-size:11px; color:var(--muted); border-radius:6px; }
+.tab.active { background:var(--surface); color:var(--text); box-shadow:0 1px 3px #0001; }
+.matchup { padding:15px 18px 13px; background:linear-gradient(115deg,var(--surface2),var(--surface)); border-bottom:1px solid var(--line); }
+.match-row { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; }
+.big-team { display:flex; align-items:center; gap:10px; min-width:0; }
+.big-team.away { justify-content:flex-end; text-align:right; }
+.big-logo { width:39px; height:39px; border-radius:11px; display:grid; place-items:center; color:white; font-size:11px; font-weight:900; flex-shrink:0; }
+.big-name { font-weight:850; font-size:13px; }
+.record { color:var(--muted); font-size:10px; margin-top:3px; }
+.big-score { font-size:29px; letter-spacing:-1px; font-weight:900; font-variant-numeric:tabular-nums; }
+.clock { text-align:center; min-width:75px; }
+.clock-main { color:var(--accent); font-size:11px; font-weight:900; }
+.clock-sub { font-size:10px; color:var(--muted); margin-top:3px; }
+.quarters { display:flex; gap:0; margin-top:14px; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.qcell { flex:1; text-align:center; padding:7px 3px; border-right:1px solid var(--line); }
+.qcell:last-child { border:0; }
+.qcell span { display:block; color:var(--muted); font-size:9px; margin-bottom:3px; }
+.qcell b { font-size:11px; }
+.qcell.total { background:var(--surface2); }
+.section-tools { padding:10px 15px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid var(--line); }
+.filter-group { display:flex; gap:5px; flex-wrap:wrap; }
+.filter { padding:5px 8px; font-size:10px; border-radius:6px; }
+.filter.active { color:var(--accent); border-color:var(--accent); background:color-mix(in srgb,var(--accent) 8%,var(--surface)); }
+.plays { height:150px; overflow:auto; }
+.play { display:grid; grid-template-columns:45px 22px minmax(0,1fr) auto; gap:8px; align-items:center; padding:10px 15px; border-bottom:1px solid var(--line); font-size:11px; }
+.play:last-child { border-bottom:0; }
+.play-time { color:var(--muted); font-variant-numeric:tabular-nums; font-size:10px; }
+.play-icon { width:22px; height:22px; border-radius:7px; display:grid; place-items:center; font-size:11px; background:var(--surface2); }
+.play-icon.scoreplay { color:var(--green); background:color-mix(in srgb,var(--green) 12%,var(--surface)); }
+.play-text { min-width:0; line-height:1.4; }
+.play-text strong { font-weight:800; }
+.play-sub { color:var(--muted); font-size:10px; margin-top:2px; }
+.play-points { font-size:10px; color:var(--muted); font-weight:800; white-space:nowrap; }
+.right-col { display:contents; }
+.boxscore-panel { flex:1; }
+.box-teams { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; padding:10px 12px; }
+.box-team { min-width:0; border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+.box-team-title { padding:7px 10px; font-size:10px; font-weight:900; background:var(--surface2); border-bottom:1px solid var(--line); }
+.table-wrap { overflow:auto; }
+table { width:100%; table-layout:fixed; border-collapse:collapse; font-size:9px; white-space:nowrap; }
+th { text-align:right; color:var(--muted); font-size:8px; letter-spacing:0; padding:6px 3px; background:var(--surface2); font-weight:850; }
+th:first-child,td:first-child { text-align:left; padding-left:8px; width:29%; }
+th:nth-child(2),td:nth-child(2) { width:10%; }
+th:nth-child(3),td:nth-child(3),th:nth-child(4),td:nth-child(4),th:nth-child(5),td:nth-child(5),th:nth-child(6),td:nth-child(6),th:nth-child(7),td:nth-child(7),th:nth-child(8),td:nth-child(8) { width:8.7%; }
+td { text-align:right; padding:5px 3px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+td:first-child { font-weight:750; }
+tr:last-child td { border-bottom:0; }
+.team-label td { background:var(--surface2); color:var(--muted); font-weight:850; font-size:9px; letter-spacing:.8px; }
+.player-cell { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.player-mini { display:none; }
+.stat-highlight { color:var(--accent); font-weight:900; }
+.leaders { padding:12px 15px 14px; }
+.leaders-title { font-size:11px; font-weight:850; margin-bottom:10px; }
+.leader-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.leader { padding:10px; border-radius:9px; background:var(--surface2); min-width:0; }
+.leader-label { color:var(--muted); font-size:9px; font-weight:800; letter-spacing:.7px; }
+.leader-value { font-size:19px; font-weight:900; margin:4px 0 2px; letter-spacing:-.5px; }
+.leader-player { font-size:10px; font-weight:750; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.leader-team { color:var(--muted); font-size:9px; margin-top:2px; }
+.bottomline { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:12px; color:var(--muted); font-size:10px; }
+.disclaimer { border:1px solid var(--line); border-radius:9px; padding:9px 12px; background:var(--surface2); color:var(--muted); font-size:10px; line-height:1.5; margin-top:14px; }
+@media(max-width:1050px) {
+ .page { padding:15px; }
+ .score-strip { grid-template-columns:repeat(3,minmax(0,1fr)); }
+ .content-grid { grid-template-columns:1fr; }
+ .right-col { display:contents; }
+ .plays { height:150px; }
+}
+@media(max-width:650px) {
+ .topbar { padding:0 14px; }
+ .pill.hide-mobile { display:none; }
+ .page { padding:12px; }
+ .headline { align-items:flex-start; flex-direction:column; }
+ .score-strip { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .right-col { display:contents; }
+ .box-teams { grid-template-columns:minmax(0,1fr); gap:7px; padding:7px; }
+ table { font-size:8px; }
+ th { font-size:7px; padding:5px 1px; }
+ th:first-child,td:first-child { padding-left:5px; width:29%; }
+ td { padding:4px 1px; }
+ .box-team-title { padding:6px 8px; font-size:9px; }
+ .match-row { gap:5px; }
+ .big-name { font-size:11px; }
+ .big-score { font-size:24px; }
+ .big-logo { width:31px; height:31px; }
+ .play { padding:9px 10px; grid-template-columns:40px 22px minmax(0,1fr) auto; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><div class="logo">◢</div><div>COURTSIDE <small>NBA LIVE CENTER</small></div></div>
+    <div class="top-actions">
+      <div class="pill"><span class="dot"></span><span id="connectionText">DEMO MODE</span></div>
+      <div class="pill hide-mobile">●&nbsp; EASTERN / WESTERN</div>
+      <button id="refreshBtn">↻ Refresh</button>
+    </div>
+  </header>
+  <main class="page">
+    <div class="headline">
+      <div>
+        <div class="eyebrow">The game, at a glance</div>
+        <h1>NBA Game Center</h1>
+        <div class="sub">Scores, play-by-play and player stats in one live-style workspace.</div>
+      </div>
+      <div class="date-nav">
+        <button id="prevDay" aria-label="Previous day">‹</button>
+        <div class="date-label" id="dateLabel">WED, OCT 14</div>
+        <button id="nextDay" aria-label="Next day">›</button>
+        <button class="primary" id="todayBtn">Today</button>
+      </div>
+    </div>
+    <section class="score-strip" id="scoreStrip" aria-label="Games"></section>
+    <div class="content-grid">
+      <section class="panel">
+        <div class="panel-head">
+          <div><div class="panel-title">Game tracker</div><div class="panel-kicker" id="gameSubtitle">Select a matchup to explore</div></div>
+        </div>
+        <div id="gameMain">
+          <div class="matchup">
+            <div class="match-row">
+              <div class="big-team"><div class="big-logo" id="homeBigLogo">MIA</div><div><div class="big-name" id="homeBigName">Miami Heat</div><div class="record">HOME</div></div></div>
+              <div class="clock"><div class="clock-main" id="gameClock">Q4 · 2:00</div><div class="clock-sub" id="gameStatus">LIVE · DEMO</div></div>
+              <div class="big-team away"><div><div class="big-name" id="awayBigName">Brooklyn Nets</div><div class="record">AWAY</div></div><div class="big-logo" id="awayBigLogo">BKN</div></div>
+            </div>
+            <div class="match-row" style="margin-top:8px">
+              <div class="big-score" id="homeBigScore">140</div><div style="text-align:center;color:var(--muted);font-size:10px;font-weight:800">SCORE</div><div class="big-score" id="awayBigScore" style="text-align:right">125</div>
+            </div>
+            <div class="quarters" id="quarters"></div>
+          </div>
+        </div>
+      </section>
+      <div class="right-col">
+        <section class="panel boxscore-panel" id="boxPanel">
+          <div class="panel-head">
+            <div><div class="panel-title">Box score</div><div class="panel-kicker">Player-by-player production</div></div>
+          </div>
+          <div class="box-teams">
+            <div class="box-team"><div class="box-team-title" id="homeBoxTitle">MIA · HOME</div><div class="table-wrap"><table><thead><tr><th>PLAYER</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>3P</th><th>+/-</th></tr></thead><tbody id="homeBoxBody"></tbody></table></div></div>
+            <div class="box-team"><div class="box-team-title" id="awayBoxTitle">BKN · AWAY</div><div class="table-wrap"><table><thead><tr><th>PLAYER</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>FG</th><th>3P</th><th>+/-</th></tr></thead><tbody id="awayBoxBody"></tbody></table></div></div>
+          </div>
+          <div class="leaders">
+            <div class="leaders-title">Game leaders</div>
+            <div class="leader-grid" id="leaderGrid"></div>
+          </div>
+        </section>
+        <section class="panel" id="playPanel">
+          <div class="panel-head"><div><div class="panel-title">Play-by-play</div><div class="panel-kicker">Latest game events</div></div><div style="font-size:10px;color:var(--muted)" id="playCount">Latest first</div></div>
+          <div class="section-tools">
+            <div class="filter-group" id="playFilters">
+              <button class="filter active" data-filter="all">All plays</button>
+              <button class="filter" data-filter="score">Scoring</button>
+              <button class="filter" data-filter="turnover">Turnovers</button>
+              <button class="filter" data-filter="foul">Fouls</button>
+            </div>
+          </div>
+          <div class="plays" id="playsList"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><div><div class="panel-title">Game notes</div><div class="panel-kicker">Quick context</div></div><span class="eyebrow" style="letter-spacing:1px">COURTSIDE</span></div>
+          <div style="padding:13px 15px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><div class="leader-label">BIGGEST LEAD</div><div class="leader-value" style="font-size:17px" id="biggestLead">+22 MIA</div></div>
+            <div><div class="leader-label">LEAD CHANGES</div><div class="leader-value" style="font-size:17px" id="leadChanges">8</div></div>
+            <div><div class="leader-label">TEAM REBOUNDS</div><div class="leader-value" style="font-size:17px" id="teamRebounds">48 – 42</div></div>
+            <div><div class="leader-label">TURNOVERS</div><div class="leader-value" style="font-size:17px" id="turnovers">11 – 15</div></div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <div class="bottomline"><span>Designed for a standard laptop · compact single-page layout</span><span id="updatedAt">Last UI refresh just now</span></div>
+    <div class="disclaimer"><strong>Prototype note:</strong> This preview uses illustrative sample data and a simulated refresh interaction. It is not connected to an official NBA data feed, so scores, play-by-play and player statistics are not live or verified. Real-time production updates require a licensed/available NBA data provider and a server-side API connection.</div>
+  </main>
+</div>
+<script>
+const games = [
+ {id:'mia',home:'Miami Heat',h:'MIA',away:'Brooklyn Nets',a:'BKN',hs:140,as:125,status:'LIVE',clock:'Q4 · 2:00',periods:[[34,29],[32,31],[39,29],[35,36]],colors:['#98002e','#111820'],lead:' +22 MIA',changes:8,reb:'48 – 42',to:'11 – 15',
+ plays:[
+ ['2:08','score','🏀','Tyler Herro','pull-up jump shot made','MIA +2'],
+ ['2:31','foul','✋','Nic Claxton','personal foul',''],
+ ['2:47','score','🏀','Cam Thomas','driving layup made','BKN +2'],
+ ['3:02','turnover','↘','Duncan Robinson','bad pass turnover',''],
+ ['3:19','score','🏀','Bam Adebayo','2-pt jump shot made','MIA +2'],
+ ['3:44','foul','✋','Dennis Schröder','shooting foul',''],
+ ['4:01','score','🏀','Mikal Bridges','3-pt jump shot made','BKN +3'],
+ ['4:20','turnover','↘','Ben Simmons','lost ball turnover',''],
+ ['4:39','score','🏀','Jimmy Butler','free throw 2 of 2 made','MIA +1'],
+ ['5:06','score','🏀','Cameron Johnson','3-pt jump shot made','BKN +3'],
+ ['5:32','foul','✋','Haywood Highsmith','personal foul',''],
+ ['5:51','score','🏀','Tyler Herro','3-pt jump shot made','MIA +3'],
+ ['6:13','turnover','↘','Cam Thomas','traveling turnover',''],
+ ['6:29','score','🏀','Bam Adebayo','layup made','MIA +2']],
+ homePlayers:[['J. Butler','34:12',22,6,5,'8-15','1-3','+12'],['B. Adebayo','35:40',26,11,4,'11-18','0-1','+18'],['T. Herro','32:08',28,4,7,'10-19','5-9','+15'],['D. Robinson','26:51',14,2,3,'5-10','4-8','+9'],['T. Rozier','29:10',16,3,6,'6-13','2-6','+8'],['K. Love','16:02',8,7,1,'3-6','2-4','+3'],['J. Jaquez Jr.','20:11',12,5,2,'5-9','1-2','+7'],['H. Highsmith','12:20',5,4,1,'2-4','1-2','+4']],
+ awayPlayers:[['C. Thomas','35:08',31,3,4,'11-24','4-10','-13'],['M. Bridges','36:11',24,5,3,'9-18','3-7','-9'],['C. Johnson','30:24',18,6,2,'6-13','4-9','-11'],['N. Claxton','28:30',12,10,2,'5-8','0-0','-14'],['D. Schröder','27:44',14,2,8,'5-12','2-5','-8'],['D. Finney-Smith','22:18',8,5,1,'3-7','2-5','-6'],['B. Simmons','16:04',6,7,5,'3-5','0-0','-8'],['D. Sharpe','13:41',7,4,0,'3-4','0-0','-4']]},
+ {id:'det',home:'Minnesota Timberwolves',h:'MIN',away:'Detroit Pistons',a:'DET',hs:78,as:91,status:'LIVE',clock:'Q3 · 1:53',periods:[[27,23],[26,28],[25,40],['—','—']],colors:['#0c2340','#c8102e'],lead:'+16 DET',changes:5,reb:'31 – 37',to:'10 – 12',
+ plays:[['1:59','score','🏀','Cade Cunningham','3-pt jump shot made','DET +3'],['2:15','turnover','↘','Anthony Edwards','bad pass turnover',''],['2:32','score','🏀','Jaden Ivey','fast-break layup made','DET +2'],['2:51','foul','✋','Rudy Gobert','personal foul',''],['3:10','score','🏀','Naz Reid','jump shot made','MIN +2'],['3:36','turnover','↘','Julius Randle','lost ball turnover',''],['3:52','score','🏀','Tobias Harris','3-pt jump shot made','DET +3']],
+ homePlayers:[['A. Edwards','25:18',21,4,3,'8-17','2-6','-8'],['J. Randle','24:02',14,6,4,'5-13','1-4','-11'],['R. Gobert','23:20',8,10,1,'4-5','0-0','-9'],['M. Conley','20:14',9,2,5,'3-7','2-5','-7'],['J. McDaniels','22:08',11,3,2,'4-8','1-3','-10']],
+ awayPlayers:[['C. Cunningham','27:30',24,4,8,'9-18','3-7','+14'],['J. Ivey','24:01',18,3,4,'7-13','2-5','+12'],['T. Harris','21:33',13,6,2,'5-9','2-4','+11'],['J. Duren','20:48',10,9,1,'5-7','0-0','+13'],['M. Beasley','18:12',12,2,1,'4-8','4-7','+10']]},
+ {id:'nop',home:'Dallas Mavericks',h:'DAL',away:'New Orleans Pelicans',a:'NOP',hs:63,as:75,status:'LIVE',clock:'Q3 · 0:00',periods:[[21,26],[22,24],[20,25],['—','—']],colors:['#00538c','#0c2340'],lead:'+14 NOP',changes:4,reb:'28 – 33',to:'9 – 13',
+ plays:[['0:08','score','🏀','Zion Williamson','driving layup made','NOP +2'],['0:21','foul','✋','Kyrie Irving','personal foul',''],['0:39','turnover','↘','Klay Thompson','bad pass turnover',''],['0:54','score','🏀','Brandon Ingram','pull-up jump shot made','NOP +2']],
+ homePlayers:[['L. Doncic','24:00',19,5,6,'7-16','2-7','-7'],['K. Irving','22:10',14,2,4,'6-12','2-5','-9'],['K. Thompson','18:42',8,3,1,'3-8','2-6','-5'],['D. Lively II','16:10',6,7,1,'3-4','0-0','-8']],
+ awayPlayers:[['Z. Williamson','23:45',21,6,4,'9-14','0-0','+11'],['B. Ingram','24:08',17,4,5,'7-15','1-3','+9'],['C. McCollum','21:19',13,2,3,'5-11','3-7','+8'],['H. Jones','19:50',8,5,2,'3-7','1-3','+7']]},
+ {id:'chi',home:'Milwaukee Bucks',h:'MIL',away:'Chicago Bulls',a:'CHI',hs:58,as:90,status:'LIVE',clock:'Q3 · 4:38',periods:[[17,28],[20,34],[21,28],['—','—']],colors:['#00471b','#ce1141'],lead:'+34 CHI',changes:2,reb:'24 – 38',to:'12 – 7',
+ plays:[['4:46','score','🏀','Coby White','3-pt jump shot made','CHI +3'],['5:02','turnover','↘','Damian Lillard','lost ball turnover',''],['5:18','score','🏀','Nikola Vučević','hook shot made','CHI +2'],['5:39','foul','✋','Brook Lopez','personal foul','']],
+ homePlayers:[['D. Lillard','22:15',15,2,4,'5-14','3-8','-18'],['G. Antetokounmpo','20:30',17,7,3,'7-13','0-2','-20'],['B. Lopez','17:02',8,4,1,'3-7','2-5','-14'],['K. Middleton','16:45',9,3,3,'3-8','1-3','-12']],
+ awayPlayers:[['C. White','24:01',22,4,6,'8-14','5-8','+23'],['N. Vučević','21:33',18,10,3,'8-12','1-2','+21'],['Z. LaVine','20:40',17,3,4,'6-11','3-5','+20'],['A. Dosunmu','18:15',12,4,5,'5-8','2-3','+19']]}
+];
+let selected=0, currentTab='plays', activeFilter='all', boxTeam='home', dayOffset=0, refreshCount=0;
+const $=id=>document.getElementById(id);
+function shortDate(){const d=new Date(Date.UTC(2026,9,14+dayOffset));return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'}).toUpperCase();}
+function logoStyle(game,side){return `background:${game.colors[side==='home'?0:1]}`}
+function renderStrip(){
+ $('scoreStrip').innerHTML=games.map((g,i)=>`<article class="game-card ${i===selected?'selected':''}" data-game="${i}">
+ <div class="game-meta"><span>${g.status==='LIVE'?'<span class="live-tag">● LIVE</span>':g.status}</span><span>${g.clock}</span></div>
+ <div class="teamline"><div class="team-logo" style="${logoStyle(g,'home')}">${g.h}</div><div class="team-name">HOME · ${g.home}</div><div class="score">${g.hs}</div></div>
+ <div class="teamline"><div class="team-logo" style="${logoStyle(g,'away')}">${g.a}</div><div class="team-name">AWAY · ${g.away}</div><div class="score">${g.as}</div></div>
+ <div class="game-foot"><span>${g.status==='LIVE'?'In progress':'Game center'}</span><span>View details ↗</span></div></article>`).join('');
+ document.querySelectorAll('[data-game]').forEach(el=>el.addEventListener('click',()=>{selected=+el.dataset.game;renderAll()}));
+}
+function renderGame(){
+ const g=games[selected];
+ $('gameSubtitle').textContent=`${g.away} at ${g.home} · ${g.status==='LIVE'?'In progress':'Game center'}`;
+ $('homeBigLogo').textContent=g.h;$('homeBigLogo').style.cssText=logoStyle(g,'home');
+ $('awayBigLogo').textContent=g.a;$('awayBigLogo').style.cssText=logoStyle(g,'away');
+ $('homeBigName').textContent=g.home;$('awayBigName').textContent=g.away;
+ $('homeBigScore').textContent=g.hs;$('awayBigScore').textContent=g.as;
+ $('gameClock').textContent=g.clock;$('gameStatus').textContent=`${g.status} · DEMO DATA`;
+ $('quarters').innerHTML=['Q1','Q2','Q3','Q4','TOTAL'].map((q,i)=>{
+ let h,a;if(i<4){h=g.periods[i]?.[0]??'—';a=g.periods[i]?.[1]??'—';}else{h=g.hs;a=g.as;}
+ return `<div class="qcell ${i===4?'total':''}"><span>${q}</span><b>${h} – ${a}</b></div>`;
+ }).join('');
+ $('homeBoxTitle').textContent=`${g.h} · ${g.home} · HOME`;$('awayBoxTitle').textContent=`${g.a} · ${g.away} · AWAY`;
+ $('biggestLead').textContent=g.lead;$('leadChanges').textContent=g.changes;$('teamRebounds').textContent=g.reb;$('turnovers').textContent=g.to;
+ renderPlays();renderBox();
+}
+function renderPlays(){
+ const g=games[selected], plays=g.plays.filter(p=>activeFilter==='all'||p[1]===activeFilter);
+ $('playsList').innerHTML=plays.map(p=>`<div class="play"><div class="play-time">${p[0]}</div><div class="play-icon ${p[1]==='score'?'scoreplay':''}">${p[2]}</div><div class="play-text"><strong>${p[3]}</strong> ${p[4]}<div class="play-sub">${p[1].toUpperCase()} · ${g[p[1]==='score'?'h':'a']}</div></div><div class="play-points">${p[5]}</div></div>`).join('')||'<div style="padding:25px;text-align:center;color:var(--muted)">No plays in this filter.</div>';
+ $('playCount').textContent=`${plays.length} plays · Latest first`;
+}
+function renderBox(){
+ const g=games[selected];
+ const rows=list=>list.map(p=>`<tr><td><div class="player-cell"><span class="player-mini">${p[0].split(' ').map(s=>s[0]).join('').slice(0,2)}</span>${p[0]}</div></td><td>${p[1]}</td><td class="${p[2]>=20?'stat-highlight':''}">${p[2]}</td><td>${p[3]}</td><td>${p[4]}</td><td>${p[5]}</td><td>${p[6]}</td><td>${p[7]}</td></tr>`).join('');
+ $('homeBoxBody').innerHTML=rows(g.homePlayers);$('awayBoxBody').innerHTML=rows(g.awayPlayers);
+ const all=[...g.homePlayers,...g.awayPlayers];
+ const leaders=[{label:'POINTS',key:2},{label:'REBOUNDS',key:3},{label:'ASSISTS',key:4}].map(x=>({...x,p:all.reduce((a,b)=>b[x.key]>a[x.key]?b:a,all[0])}));
+ $('leaderGrid').innerHTML=leaders.map(l=>`<div class="leader"><div class="leader-label">${l.label}</div><div class="leader-value">${l.p[l.key]}</div><div class="leader-player">${l.p[0]}</div><div class="leader-team">${g.homePlayers.includes(l.p)?g.h:g.a}</div></div>`).join('');
+}
+function renderAll(){renderStrip();renderGame();$('dateLabel').textContent=shortDate();}
+document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{activeFilter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));renderPlays();}));
+$('prevDay').addEventListener('click',()=>{dayOffset--;renderAll()});$('nextDay').addEventListener('click',()=>{dayOffset++;renderAll()});$('todayBtn').addEventListener('click',()=>{dayOffset=0;renderAll()});
+$('refreshBtn').addEventListener('click',()=>{refreshCount++;$('updatedAt').textContent=`UI refreshed ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})}`;$('refreshBtn').textContent='✓ Refreshed';setTimeout(()=>{$('refreshBtn').textContent='↻ Refresh'},900);});
+renderAll();
+</script>
+</body>
+</html>
